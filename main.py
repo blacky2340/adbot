@@ -25,10 +25,16 @@ class Telegram():
 			
 		with open("assets/groups.txt", encoding="utf-8") as f:
 			self.groups = [i.strip() for i in f]
+
+		with open("assets/xgroups.txt", encoding="utf-8") as f:
+			self.x_groups = [i.strip() for i in f]
 			
 		self.phone_number = self.config["telegram"]["phone_number"]
 		self.api_id = self.config["telegram"]["api_id"]
 		self.api_hash = self.config["telegram"]["api_hash"]
+
+		# Exluded groups
+		self.excluded_groups = self.x_groups
 		
 		self.client = TelegramClient(
 			session="assets/sessions/%s" % (self.phone_number),
@@ -107,6 +113,10 @@ class Telegram():
 			try:
 				groups = await self.get_groups()
 				for group in groups:
+					# Check if the group is in the excluded list
+					if group.title in self.excluded_groups or str(group.id) in self.excluded_groups:
+                        			logging.info("Excluded \x1b[38;5;147m%s\x1b[0m from forwarding." % (group.title))
+                        			continue
 					try:
 						last_message = (await self.client.get_messages(group, limit=1))[0]
 						if last_message.from_id.user_id == self.user.id:
